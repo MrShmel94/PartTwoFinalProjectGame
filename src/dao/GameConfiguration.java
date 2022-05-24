@@ -89,7 +89,6 @@ public class GameConfiguration
 
     public Map<EntityTypes, List<Animal>> movingCell () {
 
-
         return null;
     }
 
@@ -141,13 +140,12 @@ public class GameConfiguration
         }
     }
 
+    // Метод поедания травоядных животных, в каждой клетке.
     public void fullHerbivoresEatingInCell (Island island) {
         ConcurrentHashMap <EntityTypes, List<Animal>> herbivoresAnimal = island.getAllAnimals().entrySet().stream().filter(a -> a.getKey().getType().equalsIgnoreCase("Herbivores"))
                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a, b) -> a , ConcurrentHashMap::new));
         ConcurrentHashMap <EntityTypes, List<Plant>> allPlants = island.getAllPlants();
         CopyOnWriteArrayList <Plant> allPlantsValue = allPlants.values().stream().flatMap(Collection::stream).collect(Collectors.toCollection(CopyOnWriteArrayList::new));
-       // herbivoresAnimal.values().stream().map(Collection::stream).forEach(a -> a.forEach(Animal::minusHpPerTurn));
-
         while (!herbivoresAnimal.values().stream().flatMap(Collection::stream).allMatch(a -> a.getMaxHealPoint() == a.getHP())
                 || allPlantsValue.stream().allMatch(Plant::isDead)) {
             for (EntityTypes en : herbivoresAnimal.keySet()) {
@@ -207,8 +205,6 @@ public class GameConfiguration
             }
 
         }
-        //allMaps.values().stream().flatMap(Collection::stream).filter(Animal::isDead).forEach(System.out::println);
-        getInfoDeadTypeAnimalPerTurn(allMaps).entrySet().forEach(System.out::println);
         allMaps = clearingMap(allMaps);
         matrix[x][y].setAllAnimals(clearingMap(allMaps));
     }
@@ -218,38 +214,43 @@ public class GameConfiguration
         return array.entrySet().stream().collect(Collectors.toMap(Entry::getKey, b -> b.getValue().stream().filter(a -> !a.isDead()).collect(Collectors.toList())));
     }
 
-    private Map<EntityTypes, Long> getInfoCountReproductionPerTurn (Map<EntityTypes, List<Animal>> value){
-        return value.entrySet().stream().collect(Collectors.toMap(Entry::getKey, val -> val.getValue().stream().filter(Animal::isPregnant).count()));
+    private ConcurrentHashMap<String, Long> getInfoCountReproductionPerTurn (Island island){
+        return island.getAllAnimals().entrySet().stream().collect(Collectors.toMap(key -> key.getKey().getIcon(), val -> val.getValue().stream().filter(Animal::isPregnant).count(), Long::sum , ConcurrentHashMap::new));
     }
 
-    private Map<EntityTypes, Long> getInfoDeadTypeAnimalPerTurn (Map<EntityTypes, List<Animal>> value){
-        return value.entrySet().stream().collect(Collectors.toMap(Entry::getKey, val -> val.getValue().stream().filter(Animal::isDead).count()));
+    private ConcurrentHashMap<String, Long> getInfoDeadTypeAnimalPerTurn (Island island){
+        return island.getAllAnimals().entrySet().stream().collect(Collectors.toMap(key -> key.getKey().getIcon(), val -> val.getValue().stream().filter(Animal::isDead).count(), Long::sum , ConcurrentHashMap::new));
     }
 
-    //Information about the number and types of animals in a particular cell
-    private Map<EntityTypes, Integer> getInfoTypeAndAmountCell(int x , int y){
-        Map<EntityTypes,List<Animal>> value = matrix[x][y].getAllAnimals();
-        if (value == null){
-            return null;
-        }
-        return value.entrySet().stream().collect(Collectors.toMap(Entry::getKey, b-> b.getValue().size()));
+    public ConcurrentHashMap <String, Long> getFullIslandInfoReproductionPerTurn(){
+       return Arrays.stream(matrix).map(Arrays::stream).flatMap(a -> a.map(this::getInfoCountReproductionPerTurn)).flatMap(a -> a.entrySet().stream()).collect(Collectors.toMap(Entry::getKey, Entry::getValue, Long::sum, ConcurrentHashMap::new));
     }
 
-    private Map<EntityTypes, Integer> getInfoTypeAndAmountCell(Island island){
-        Map<EntityTypes,List<Animal>> value = island.getAllAnimals();
-        if (value == null){
-            return null;
-        }
-        return value.entrySet().stream().collect(Collectors.toMap(Entry::getKey, b-> b.getValue().size()));
+    public ConcurrentHashMap <String, Long> getFullIslandInfoDeadTypeAnimalPerTurn(){
+        return Arrays.stream(matrix).map(Arrays::stream).flatMap(a -> a.map(this::getInfoDeadTypeAnimalPerTurn)).flatMap(a -> a.entrySet().stream()).collect(Collectors.toMap(Entry::getKey, Entry::getValue, Long::sum, ConcurrentHashMap::new));
     }
+
+//    //Information about the number and types of animals in a particular cell
+//    private Map<EntityTypes, Integer> getInfoTypeAndAmountCell(int x , int y){
+//        Map<EntityTypes,List<Animal>> value = matrix[x][y].getAllAnimals();
+//        if (value == null){
+//            return null;
+//        }
+//        return value.entrySet().stream().collect(Collectors.toMap(Entry::getKey, b-> b.getValue().size()));
+//    }
+
+//    private ConcurrentHashMap<EntityTypes, Integer> getInfoTypeAndAmountCell(Island island){
+//        return island.getAllAnimals().entrySet().stream().collect(Collectors.toMap(Entry::getKey, b-> b.getValue().size()));
+//    }
+
+//    public String getInfoMaxValueAnimalPerCel (Island island){
+//        island.getAllAnimals().values().stream().filter(a -> Math::max)
+//    }
 
 
     public void infoStartGame (){
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < matrix[i].length; j++) {
-                System.out.println(getInfoTypeAndAmountCell(i, j));
-            }
-        }
+        ConcurrentHashMap <String, Integer> value = Arrays.stream(matrix).map(Arrays::stream).flatMap(a -> a.map(Island::getAllAnimals)).flatMap(a -> a.entrySet().stream()).collect(Collectors.toMap(key -> key.getKey().getIcon(), size -> size.getValue().size(), Integer::sum, ConcurrentHashMap::new));
+        value.entrySet().forEach(System.out::println);
     }
 
     //The method checks if the animal can move in the given direction

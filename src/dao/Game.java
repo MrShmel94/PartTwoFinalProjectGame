@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Game extends GameConfiguration {
 
-    private static final GameConfiguration game =  new GameConfiguration(3,1,1, 10,0, 100);
+    private static final GameConfiguration game =  new GameConfiguration(3,5,5, 100,100, 100);
 
     private final String WOLF = "\uD83D\uDC3A";
     public final String SNAKE = "\uD83D\uDC0D";
@@ -41,7 +41,7 @@ public class Game extends GameConfiguration {
 //        Map<EntityTypes, List<Animal>> spraw1 = island.getAllAnimals();
 //        spraw1.values().stream().map(Collection::stream).forEach(a -> a.forEach(Animal::minusHpPerTurn));
         //spraw1.values().stream().flatMap(Collection::stream).filter(a -> a.getKind().getType().equalsIgnoreCase("Herbivores")).forEach(System.out::println);
-        game.fullHerbivoresEatingInCell(game.getIsland(0,0));
+       // game.fullHerbivoresEatingInCell(game.getIsland(0,0));
 
 
 //
@@ -73,6 +73,6 @@ public class Game extends GameConfiguration {
 
     public static void startGame (){
         game.drawGame();
-        //game.infoStartGame();
+        game.infoStartGame();
     }
 }

@@ -152,6 +152,9 @@ public abstract class Animal implements MethodsAnimal {
         return false;
     }
 
+    public void print (Animal animal){
+
+    }
     @Override
     public int offspring (){
         return ThreadLocalRandom.current().nextInt(1,(AllStatistics.getValueMapMaxOffSpring(this.kind) + 1));

@@ -1,31 +1,37 @@
 package enums;
 
 public enum EntityTypes {
-    WOLF("Predator"),
-    SNAKE ("Predator"),
-    FOX ("Predator"),
-    BEAR ("Predator"),
-    EAGLE ("Predator"),
-    HORSE ("Herbivores"),
-    DEER ("Herbivores"),
-    RABBIT ("Herbivores"),
-    HAMSTER ("Herbivores"),
-    GOAT ("Herbivores"),
-    SHEEP ("Herbivores"),
-    KANGAROO ("Herbivores"),
-    COW ("Herbivores"),
-    DUCK ("Herbivores"),
-    CATERPILLAR ("Herbivores"),
-    GRASS ("Plant"),
-    BERRIES ("Plant");
+    WOLF("Predator", "\uD83D\uDC3A"),
+    SNAKE ("Predator", "\uD83D\uDC0D"),
+    FOX ("Predator", "\uD83E\uDD8A"),
+    BEAR ("Predator", "\uD83D\uDC3B"),
+    EAGLE ("Predator", "\uD83E\uDD85"),
+    HORSE ("Herbivores", "\uD83D\uDC0E"),
+    DEER ("Herbivores", "\uD83E\uDD8C"),
+    RABBIT ("Herbivores", "\uD83D\uDC07"),
+    HAMSTER ("Herbivores", "\uD83D\uDC39"),
+    GOAT ("Herbivores", "\uD83D\uDC10"),
+    SHEEP ("Herbivores", "\uD83D\uDC11"),
+    KANGAROO ("Herbivores","\uD83E\uDD98"),
+    COW ("Herbivores" , "\uD83D\uDC2E"),
+    DUCK ("Herbivores", "\uD83E\uDD86"),
+    CATERPILLAR ("Herbivores" , "\uD83D\uDC1B"),
+    GRASS ("Plant" ,"\uD83C\uDF3F"),
+    BERRIES ("Plant" , "\uD83C\uDF3A");
 
     private String type;
+    private String icon;
 
-    EntityTypes(String type) {
+    EntityTypes(String type, String icon) {
         this.type = type;
+        this.icon = icon;
     }
 
     public String getType(){
         return type;
+    }
+
+    public String getIcon(){
+        return icon;
     }
 }
