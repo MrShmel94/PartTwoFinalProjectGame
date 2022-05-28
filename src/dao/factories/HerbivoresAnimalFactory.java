@@ -17,8 +17,8 @@ public class HerbivoresAnimalFactory {
             case HAMSTER -> animal = new Hamster();
             case GOAT -> animal = new Goat();
             case SHEEP -> animal = new Sheep();
-            case KANGAROO -> animal = new Kangaroo();
-            case COW -> animal = new Cow();
+            case BOAR -> animal = new Kangaroo();
+            case BUFFALO -> animal = new Cow();
             case DUCK -> animal = new Duck();
             case CATERPILLAR -> animal = new Caterpillar();
         }

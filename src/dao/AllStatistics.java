@@ -4,6 +4,7 @@ import enums.EntityTypes;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class AllStatistics {
 
@@ -31,56 +32,56 @@ public class AllStatistics {
         mapMaxPossibleOffspring.put(EntityTypes.HAMSTER, 20);
         mapMaxPossibleOffspring.put(EntityTypes.GOAT, 6);
         mapMaxPossibleOffspring.put(EntityTypes.SHEEP, 8);
-        mapMaxPossibleOffspring.put(EntityTypes.KANGAROO, 7);
-        mapMaxPossibleOffspring.put(EntityTypes.COW, 3);
+        mapMaxPossibleOffspring.put(EntityTypes.BOAR, 7);
+        mapMaxPossibleOffspring.put(EntityTypes.BUFFALO, 3);
         mapMaxPossibleOffspring.put(EntityTypes.DUCK, 10);
         mapMaxPossibleOffspring.put(EntityTypes.CATERPILLAR, 25);
 
         mapFullEating.put(EntityTypes.WOLF, 8.0);
-        mapFullEating.put(EntityTypes.SNAKE, 0.3);
-        mapFullEating.put(EntityTypes.FOX, 1.0);
-        mapFullEating.put(EntityTypes.BEAR, 38.0);
+        mapFullEating.put(EntityTypes.SNAKE, 3.0);
+        mapFullEating.put(EntityTypes.FOX, 2.0);
+        mapFullEating.put(EntityTypes.BEAR, 80.0);
         mapFullEating.put(EntityTypes.EAGLE, 1.0);
-        mapFullEating.put(EntityTypes.HORSE, 45.0);
-        mapFullEating.put(EntityTypes.DEER, 26.0);
+        mapFullEating.put(EntityTypes.HORSE, 60.0);
+        mapFullEating.put(EntityTypes.DEER, 50.0);
         mapFullEating.put(EntityTypes.RABBIT, 0.45);
-        mapFullEating.put(EntityTypes.HAMSTER, 0.0075);
+        mapFullEating.put(EntityTypes.HAMSTER, 0.01);
         mapFullEating.put(EntityTypes.GOAT, 10.0);
-        mapFullEating.put(EntityTypes.SHEEP, 7.0);
-        mapFullEating.put(EntityTypes.KANGAROO, 7.0);
-        mapFullEating.put(EntityTypes.COW, 53.0);
+        mapFullEating.put(EntityTypes.SHEEP, 15.0);
+        mapFullEating.put(EntityTypes.BOAR, 50.0);
+        mapFullEating.put(EntityTypes.BUFFALO, 100.0);
         mapFullEating.put(EntityTypes.DUCK, 0.15);
         mapFullEating.put(EntityTypes.CATERPILLAR, 0.0025);
 
         mapMaxLimit.put(EntityTypes.WOLF, 30);
-        mapMaxLimit.put(EntityTypes.SNAKE, 123);
-        mapMaxLimit.put(EntityTypes.FOX, 50);
-        mapMaxLimit.put(EntityTypes.BEAR, 7);
-        mapMaxLimit.put(EntityTypes.EAGLE, 166);
-        mapMaxLimit.put(EntityTypes.HORSE, 23);
-        mapMaxLimit.put(EntityTypes.DEER, 41);
-        mapMaxLimit.put(EntityTypes.RABBIT, 750);
-        mapMaxLimit.put(EntityTypes.HAMSTER, 10_000);
-        mapMaxLimit.put(EntityTypes.GOAT, 107);
-        mapMaxLimit.put(EntityTypes.SHEEP, 156);
-        mapMaxLimit.put(EntityTypes.KANGAROO, 149);
-        mapMaxLimit.put(EntityTypes.COW, 20);
-        mapMaxLimit.put(EntityTypes.DUCK, 500);
-        mapMaxLimit.put(EntityTypes.CATERPILLAR, 10_000);
+        mapMaxLimit.put(EntityTypes.SNAKE, 30);
+        mapMaxLimit.put(EntityTypes.FOX, 30);
+        mapMaxLimit.put(EntityTypes.BEAR, 5);
+        mapMaxLimit.put(EntityTypes.EAGLE, 20);
+        mapMaxLimit.put(EntityTypes.HORSE, 20);
+        mapMaxLimit.put(EntityTypes.DEER, 20);
+        mapMaxLimit.put(EntityTypes.RABBIT, 150);
+        mapMaxLimit.put(EntityTypes.HAMSTER, 500);
+        mapMaxLimit.put(EntityTypes.GOAT, 140);
+        mapMaxLimit.put(EntityTypes.SHEEP, 140);
+        mapMaxLimit.put(EntityTypes.BOAR, 50);
+        mapMaxLimit.put(EntityTypes.BUFFALO, 10);
+        mapMaxLimit.put(EntityTypes.DUCK, 200);
+        mapMaxLimit.put(EntityTypes.CATERPILLAR, 1000);
 
         mapWeightAnimals.put(EntityTypes.WOLF, 50.0);
-        mapWeightAnimals.put(EntityTypes.SNAKE, 2.0);
-        mapWeightAnimals.put(EntityTypes.FOX, 4.0);
-        mapWeightAnimals.put(EntityTypes.BEAR, 250.0);
+        mapWeightAnimals.put(EntityTypes.SNAKE, 15.0);
+        mapWeightAnimals.put(EntityTypes.FOX, 8.0);
+        mapWeightAnimals.put(EntityTypes.BEAR, 500.0);
         mapWeightAnimals.put(EntityTypes.EAGLE, 6.0);
-        mapWeightAnimals.put(EntityTypes.HORSE, 300.0);
-        mapWeightAnimals.put(EntityTypes.DEER, 170.0);
-        mapWeightAnimals.put(EntityTypes.RABBIT, 3.0);
-        mapWeightAnimals.put(EntityTypes.HAMSTER, 0.03);
-        mapWeightAnimals.put(EntityTypes.GOAT, 65.0);
-        mapWeightAnimals.put(EntityTypes.SHEEP, 45.0);
-        mapWeightAnimals.put(EntityTypes.KANGAROO, 47.0);
-        mapWeightAnimals.put(EntityTypes.COW, 350.0);
+        mapWeightAnimals.put(EntityTypes.HORSE, 400.0);
+        mapWeightAnimals.put(EntityTypes.DEER, 300.0);
+        mapWeightAnimals.put(EntityTypes.RABBIT, 2.0);
+        mapWeightAnimals.put(EntityTypes.HAMSTER, 0.05);
+        mapWeightAnimals.put(EntityTypes.GOAT, 60.0);
+        mapWeightAnimals.put(EntityTypes.SHEEP, 70.0);
+        mapWeightAnimals.put(EntityTypes.BOAR, 400.0);
+        mapWeightAnimals.put(EntityTypes.BUFFALO, 700.0);
         mapWeightAnimals.put(EntityTypes.DUCK, 1.0);
         mapWeightAnimals.put(EntityTypes.CATERPILLAR, 0.01);
 
@@ -95,8 +96,8 @@ public class AllStatistics {
         mapMaxTurnToHungry.put(EntityTypes.HAMSTER, 3);
         mapMaxTurnToHungry.put(EntityTypes.GOAT, 5);
         mapMaxTurnToHungry.put(EntityTypes.SHEEP, 5);
-        mapMaxTurnToHungry.put(EntityTypes.KANGAROO, 8);
-        mapMaxTurnToHungry.put(EntityTypes.COW, 4);
+        mapMaxTurnToHungry.put(EntityTypes.BOAR, 8);
+        mapMaxTurnToHungry.put(EntityTypes.BUFFALO, 4);
         mapMaxTurnToHungry.put(EntityTypes.DUCK, 4);
         mapMaxTurnToHungry.put(EntityTypes.CATERPILLAR, 5);
 
@@ -111,21 +112,27 @@ public class AllStatistics {
         mapMaxSpeedPerTurn.put(EntityTypes.HAMSTER, 1);
         mapMaxSpeedPerTurn.put(EntityTypes.GOAT, 1);
         mapMaxSpeedPerTurn.put(EntityTypes.SHEEP, 1);
-        mapMaxSpeedPerTurn.put(EntityTypes.KANGAROO, 2);
-        mapMaxSpeedPerTurn.put(EntityTypes.COW, 1);
+        mapMaxSpeedPerTurn.put(EntityTypes.BOAR, 2);
+        mapMaxSpeedPerTurn.put(EntityTypes.BUFFALO, 1);
         mapMaxSpeedPerTurn.put(EntityTypes.DUCK, 1);
         mapMaxSpeedPerTurn.put(EntityTypes.CATERPILLAR, 1);
 
         mapChanceForFood.put(EntityTypes.WOLF, new HashMap<>());
-        setMappingEat(mapChanceForFood.get(EntityTypes.WOLF),"Snake 10", "Fox 10", "Eagle 10", "Horse 30" , "Deer 40" , "Rabbit 70", "Hamster 90" , "Goat 60", "Sheep 70", "Kangaroo 20", "Cow 30", "Duck 80");
+        setMappingEat(mapChanceForFood.get(EntityTypes.WOLF),"Horse 10" , "Deer 15" , "Rabbit 60", "Hamster 80" , "Goat 60", "Sheep 70", "Boar 15", "Buffalo 10", "Duck 40");
         mapChanceForFood.put(EntityTypes.SNAKE, new HashMap<>());
-        setMappingEat(mapChanceForFood.get(EntityTypes.SNAKE), "Rabbit 50", "Hamster 90" , "Duck 50", "Caterpillar 90");
+        setMappingEat(mapChanceForFood.get(EntityTypes.SNAKE), "Fox 15" , "Rabbit 20", "Hamster 40" , "Duck 10");
         mapChanceForFood.put(EntityTypes.FOX, new HashMap<>());
-        setMappingEat(mapChanceForFood.get(EntityTypes.FOX),"Snake 20", "Eagle 10", "Deer 5" , "Rabbit 70", "Hamster 90" , "Goat 20", "Sheep 20", "Kangaroo 5", "Duck 80");
+        setMappingEat(mapChanceForFood.get(EntityTypes.FOX), "Rabbit 70", "Hamster 90" , "Duck 60", "Caterpillar 40");
         mapChanceForFood.put(EntityTypes.BEAR, new HashMap<>());
-        setMappingEat(mapChanceForFood.get(EntityTypes.BEAR),"Wolf 20", "Snake 30", "Fox 20", "Eagle 30", "Horse 70" , "Deer 80" , "Rabbit 80", "Hamster 90" , "Goat 70", "Sheep 70", "Kangaroo 60", "Cow 75", "Duck 80");
+        setMappingEat(mapChanceForFood.get(EntityTypes.BEAR),"Snake 80", "Horse 40" , "Deer 80" , "Rabbit 80", "Hamster 90" , "Goat 70", "Sheep 70", "Boar 50", "Buffalo 20", "Duck 10");
         mapChanceForFood.put(EntityTypes.EAGLE, new HashMap<>());
-        setMappingEat(mapChanceForFood.get(EntityTypes.EAGLE), "Snake 50", "Rabbit 90" , "Hamster 90", "Duck 85", "Caterpillar 20");
+        setMappingEat(mapChanceForFood.get(EntityTypes.EAGLE), "Snake 10", "Rabbit 90" , "Hamster 90", "Duck 80");
+        mapChanceForFood.put(EntityTypes.HAMSTER, new HashMap<>());
+        setMappingEat(mapChanceForFood.get(EntityTypes.HAMSTER), "Caterpillar 90");
+        mapChanceForFood.put(EntityTypes.BOAR, new HashMap<>());
+        setMappingEat(mapChanceForFood.get(EntityTypes.BOAR), "Hamster 50" , "Caterpillar 90");
+        mapChanceForFood.put(EntityTypes.DUCK, new HashMap<>());
+        setMappingEat(mapChanceForFood.get(EntityTypes.DUCK), "Caterpillar 90");
     }
 
     //We give the user only a copy of the map so that nothing can be changed in the main map.
@@ -187,7 +194,8 @@ public class AllStatistics {
     }
 
     public static boolean get (EntityTypes who, EntityTypes whom){
-        return mapChanceForFood.get(who).getOrDefault(whom, 0) != 0;
+        //return mapChanceForFood.get(who).getOrDefault(whom, 0) != 0;
+        return Optional.ofNullable(mapChanceForFood.get(who)).isPresent() && mapChanceForFood.get(who).getOrDefault(whom, 0) != 0;
     }
     //This method is needed in order to quickly add values to eat map.
     private static void setMappingEat (Map <EntityTypes, Integer> value, String ... s){

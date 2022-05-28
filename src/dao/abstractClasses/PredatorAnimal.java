@@ -2,7 +2,6 @@ package dao.abstractClasses;
 
 import dao.AllStatistics;
 import enums.EntityTypes;
-import enums.Direction;
 
 import java.util.concurrent.ThreadLocalRandom;
 

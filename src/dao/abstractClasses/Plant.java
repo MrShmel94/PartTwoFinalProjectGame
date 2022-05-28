@@ -4,14 +4,14 @@ import enums.EntityTypes;
 
 import java.util.Objects;
 
-public abstract class Plant {
+public abstract class Plant{
 
     private EntityTypes type;
     private int weight;
     private String name;
     private boolean isDead;
     private double HP;
-    private int maxValuePerCell;
+    public static int maxValuePerCell = 200;
     private boolean isPoison;
 
     public Plant(EntityTypes type, int weight) {
@@ -20,7 +20,6 @@ public abstract class Plant {
         this.isDead = false;
         this.weight = weight;
         this.HP = weight;
-        this.maxValuePerCell = 10_000;
     }
 
     public EntityTypes getType() {
@@ -65,10 +64,6 @@ public abstract class Plant {
 
     public int getMaxValuePerCell() {
         return maxValuePerCell;
-    }
-
-    public void setMaxValuePerCell(int maxValuePerCell) {
-        this.maxValuePerCell = maxValuePerCell;
     }
 
     public boolean isPoison() {

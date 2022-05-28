@@ -9,7 +9,7 @@ import enums.Sex;
 import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
-public abstract class Animal implements MethodsAnimal {
+public abstract class Animal implements MethodsAnimal{
 
     private final EntityTypes kind;
     private final String type;
@@ -182,6 +182,7 @@ public abstract class Animal implements MethodsAnimal {
                 ", isDead=" + isDead +
                 ", sex=" + sex +
                 ", speed=" + speed +
+                ", isChecked=" + isChecked +
                 ", isPregnant=" + isPregnant +
                 ", maxHealPoint=" + maxHealPoint +
                 ", HP=" + HP +

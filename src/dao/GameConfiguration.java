@@ -14,6 +14,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,8 +31,12 @@ public class GameConfiguration
     private int percentCreationPredator;
     private int percentCreationHerbivores;
     private int percentCreatePlant;
-
-    //private final Island island = new Island(this);
+    private AtomicInteger step;
+    private ConcurrentHashMap <String, Long> deadPerTurn = new ConcurrentHashMap<>();
+    private ConcurrentHashMap <String, Integer> reproductionsPerTurn = new ConcurrentHashMap<>();
+    private ConcurrentHashMap <String, Integer> deadPlantsPerTurn = new ConcurrentHashMap<>();
+    private ConcurrentHashMap <String, Integer> reproductionsPlantsPerTurn = new ConcurrentHashMap<>();
+    private boolean clear = false;
 
     public GameConfiguration(){}
 
@@ -46,6 +51,7 @@ public class GameConfiguration
 //    }
 
     public GameConfiguration(long turn, int width, int height, int percentCreationHerbivores , int percentCreationPredator, int percentCreatePlant) {
+        this.step = new AtomicInteger(0);
         this.turn = turn;
         this.width = width;
         this.height = height;
@@ -62,8 +68,6 @@ public class GameConfiguration
         for (int i = 0; i < matrix.length; i++) {
             for (int j = 0; j < matrix[i].length; j++) {
                 matrix[i][j] = new Island(this);
-                //this.reproductionAnimals(matrix[i][j]);
-                //this.fullHerbivoresEatingInCell(matrix[i][j]);
             }
         }
     }
@@ -87,15 +91,14 @@ public class GameConfiguration
     }
 
 
-    public Map<EntityTypes, List<Animal>> movingCell () {
+    public void movingCell (Island island) {
 
-        return null;
     }
 
     //Метод появления потомства в клетке
-    public Map<EntityTypes, Integer> birthOffspring(Island island) {
-        Map<EntityTypes, List<Animal>> values = island.getAllAnimals();
-        Map<EntityTypes, Integer> result = new HashMap<>();
+    public void birthOffspring(Island island) {
+        ConcurrentHashMap<EntityTypes, List<Animal>> values = island.getAllAnimals();
+        ConcurrentHashMap<String, Integer> result = new ConcurrentHashMap<>();
 
         for (EntityTypes en : values.keySet()) {
             List<Animal> femaleAnimalPregnant = values.get(en).stream().filter(a -> a.getSex() == Sex.FEMALE).filter(Animal::isPregnant).toList();
@@ -111,17 +114,18 @@ public class GameConfiguration
                         values.get(en).add(HerbivoresAnimalFactory.types(en));
                     }
                     animal.setPregnant(false);
-                    result.merge(en, 1, Integer::sum);
+                    result.merge(en.getIcon(), 1, Integer::sum);
                 }
             }
         }
-        return result;
+        island.setAllAnimals(values);
+        fullInfoCountOffspringAnimalsPerTurn(result);
     }
 
 
     // Метод размножения в клетке
     public void reproductionAnimals (Island island){
-        Map<EntityTypes, List<Animal>> values = island.getAllAnimals();
+        ConcurrentHashMap<EntityTypes, List<Animal>> values = island.getAllAnimals();
         for (EntityTypes en : values.keySet()){
             List<Animal> maleAnimal = values.get(en).stream().filter(a -> a.getSex() == Sex.MALE).toList();
             List<Animal> femaleAnimal = values.get(en).stream().filter(a -> a.getSex() == Sex.FEMALE).filter(b -> !b.isPregnant()).toList();
@@ -138,26 +142,63 @@ public class GameConfiguration
                 }
             }
         }
+        island.setAllAnimals(values);
     }
 
-    // Метод поедания травоядных животных, в каждой клетке.
-    public void fullHerbivoresEatingInCell (Island island) {
-        ConcurrentHashMap <EntityTypes, List<Animal>> herbivoresAnimal = island.getAllAnimals().entrySet().stream().filter(a -> a.getKey().getType().equalsIgnoreCase("Herbivores"))
-                .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a, b) -> a , ConcurrentHashMap::new));
-        ConcurrentHashMap <EntityTypes, List<Plant>> allPlants = island.getAllPlants();
-        CopyOnWriteArrayList <Plant> allPlantsValue = allPlants.values().stream().flatMap(Collection::stream).collect(Collectors.toCollection(CopyOnWriteArrayList::new));
-        while (!herbivoresAnimal.values().stream().flatMap(Collection::stream).allMatch(a -> a.getMaxHealPoint() == a.getHP())
-                || allPlantsValue.stream().allMatch(Plant::isDead)) {
-            for (EntityTypes en : herbivoresAnimal.keySet()) {
-                if (!fullEating(herbivoresAnimal.get(en))) {
-                    for (Animal animal : herbivoresAnimal.get(en)) {
+    public void minusHP (Island island){
+        island.getAllAnimals().values().stream().map(Collection::stream).forEach(a -> a.forEach(Animal::minusHpPerTurn));
+    }
+
+    public void startFullIslandMinusHp (){
+        Arrays.stream(matrix).flatMap(Arrays::stream).forEach(this::minusHP);
+    }
+
+    public void startFullIslandGrowsPlant (){
+        Arrays.stream(matrix).flatMap(Arrays::stream).forEach(Island::grassGrowth);
+    }
+
+    public void fullHerbivoresEatingInCellQ(Island island) {
+        ConcurrentHashMap<EntityTypes, List<Animal>> herbivoresAnimal = island.getAllAnimals().entrySet().stream().filter(a -> a.getKey().getType().equalsIgnoreCase("Herbivores"))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a, b) -> a, ConcurrentHashMap::new));
+        ConcurrentHashMap<EntityTypes, List<Plant>> allPlants = island.getAllPlants();
+        CopyOnWriteArrayList<Plant> allPlantsValue = allPlants.values().stream().flatMap(Collection::stream).collect(Collectors.toCollection(CopyOnWriteArrayList::new));
+        Collections.shuffle(allPlantsValue);
+        CopyOnWriteArrayList<EntityTypes> keySetAllAnimal = new CopyOnWriteArrayList<>(herbivoresAnimal.keySet());
+        Collections.shuffle(keySetAllAnimal);
+        while (herbivoresAnimal.values().stream().flatMap(Collection::stream).noneMatch(Animal::isChecked)
+                //herbivoresAnimal.values().stream().flatMap(Collection::stream).noneMatch(a -> a.getMaxHealPoint() == a.getHP())
+        ) {
+            if (herbivoresAnimal.values().stream().mapToLong(Collection::size).sum() == 0){
+                break;
+            }
+            for (int i = 0; i < keySetAllAnimal.size(); i++) {
+                if (herbivoresAnimal.get(keySetAllAnimal.get(i)).stream().allMatch(Animal::isChecked)){
+                    continue;
+                }
+                if (!fullEating(herbivoresAnimal.get(keySetAllAnimal.get(i)))) {
+                    if (i != keySetAllAnimal.size() - 1) {
+                        if (AllStatistics.get(keySetAllAnimal.get(i), keySetAllAnimal.get(i + 1))) {
+                            for (Animal animalWho : herbivoresAnimal.get(keySetAllAnimal.get(i))) {
+                                HerbivoresAnimal whoEat = (HerbivoresAnimal) animalWho;
+                                for (Animal animalWhom : herbivoresAnimal.get(keySetAllAnimal.get(i + 1))) {
+                                    if (whoEat.getHP() != whoEat.getMaxHealPoint()) {
+                                        whoEat.eat(animalWhom);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    for (Animal animal : herbivoresAnimal.get(keySetAllAnimal.get(i))) {
                         if (allPlantsValue.stream().allMatch(Plant::isDead) || allPlants.isEmpty()) {
+                            allPlantsValue.clear();
+                            herbivoresAnimal.get(keySetAllAnimal.get(i)).forEach(an -> an.setChecked(true));
                             break;
                         }
                         HerbivoresAnimal whoEat = (HerbivoresAnimal) animal;
                         for (Plant plant : allPlantsValue) {
-                            if (plant.isDead()){
+                            if (plant.isDead()) {
                                 allPlantsValue.remove(plant);
+                                deadPlantsPerTurn.merge(plant.getType().getIcon(), 1, Integer::sum);
                             }
                             if (whoEat.getHP() != whoEat.getMaxHealPoint()) {
                                 whoEat.eat(plant);
@@ -166,59 +207,114 @@ public class GameConfiguration
                             }
                         }
                     }
+                }else {
+                    herbivoresAnimal.get(keySetAllAnimal.get(i)).forEach(animal -> animal.setChecked(true));
                 }
             }
         }
+        //getInfoDeadTypeAnimalPerTurn(island).entrySet().forEach(System.out::println);
+        fullInfoCountDeadAnimalsPerTurn(getInfoDeadTypeAnimalPerTurn(island));
+        herbivoresAnimal = clearingMap(herbivoresAnimal);
+        ConcurrentHashMap <EntityTypes, List<Animal>> allMap = island.getAllAnimals();
+        herbivoresAnimal.forEach((k, v) -> allMap.merge(k, v, (v1, v2) -> v2));
+        allMap.values().stream().flatMap(Collection::stream).forEach(animal -> animal.setChecked(false));
+        island.setAllAnimals(clearingMap(allMap));
     }
 
-    // Метод поедания хищниками в клетке, (x,y - координаты клетки, лист array - это лист животных которые приходят в клетку)
-    public void fullPredatorsEatingInCell (int x, int y, Map<EntityTypes, List<Animal>> array){
-        Map<EntityTypes, List<Animal>> valueCell = matrix [x][y].getAllAnimals();
-        Map<EntityTypes, List<Animal>> allMaps = Stream.of(valueCell, array).flatMap(map -> map.entrySet().stream()).collect(Collectors.toMap(Entry::getKey, Entry::getValue, (v1, v2) -> Stream.concat(v1.stream(), v2.stream()).collect(Collectors.toList())));
-        List<EntityTypes>  allTypesAnimalsCell = new ArrayList<>(allMaps.keySet().stream().toList());
-        List <EntityTypes> shuffleListPredators = new ArrayList<>(allMaps.keySet().stream().filter(a -> a.getType().equalsIgnoreCase("Predator")).toList());
+    public void fullInfoCountDeadAnimalsPerTurn(ConcurrentHashMap<String, Long> values) {
+        if (this.clear){
+            deadPerTurn.clear();
+            values.forEach((k, v) -> deadPerTurn.merge(k , v, Long::sum));
+        }else {
+            values.forEach((k, v) -> deadPerTurn.merge(k , v, Long::sum));
+        }
+    }
+
+    public void fullInfoCountOffspringAnimalsPerTurn(ConcurrentHashMap<String, Integer> values) {
+        if (this.clear){
+            reproductionsPerTurn.clear();
+            values.forEach((k, v) -> reproductionsPerTurn.merge(k , v, Integer::sum));
+        }else {
+            values.forEach((k, v) -> reproductionsPerTurn.merge(k , v, Integer::sum));
+        }
+    }
+
+    public void fullInfoPerTurn (){
+        System.out.println("\nStep - " + step.get() + "; Type Animals - (Dead/Was Born) + Type Plants");
+        deadPerTurn.forEach((key, value) -> System.out.print(key + "-(" + value + "/" + reproductionsPerTurn.getOrDefault(key, 0) + ") "));
+        deadPlantsPerTurn.forEach((key, value) -> System.out.print(key + "-(" + value + "/" + reproductionsPlantsPerTurn.getOrDefault(key, 0) + ") "));
+        reproductionsPerTurn.clear();
+        deadPerTurn.clear();
+        deadPlantsPerTurn.clear();
+        reproductionsPlantsPerTurn.clear();
+    }
+
+    public void fullPredatorsEatingInCell (Island island){
+        ConcurrentHashMap<EntityTypes, List<Animal>> valueCell = island.getAllAnimals();
+        CopyOnWriteArrayList<EntityTypes>  allTypesAnimalsCell = new CopyOnWriteArrayList<>(new CopyOnWriteArrayList<>(valueCell.keySet()));
+        CopyOnWriteArrayList <EntityTypes> shuffleListPredators = new CopyOnWriteArrayList<>(valueCell.keySet().stream().filter(a -> a.getType().equalsIgnoreCase("Predator")).collect(Collectors.toCollection(CopyOnWriteArrayList::new)));
         Collections.shuffle(shuffleListPredators);
-        //|| allMaps.values().stream().flatMap(Collection::stream).filter(a -> a.getKind().getType().equalsIgnoreCase("Herbivores")).allMatch(Animal::isDead)
-        //|| allMaps.values().stream().flatMap(Collection::stream).allMatch(Animal::isChecked)) {
-        while (!allMaps.values().stream().flatMap(Collection::stream).filter(a -> a.getKind().getType().equalsIgnoreCase("Predator")).allMatch(b -> b.getMaxHealPoint() == b.getHP())) {
+
+        while (!shuffleListPredators.isEmpty()
+               // !valueCell.values().stream().flatMap(Collection::stream).filter(a -> a.getKind().getType().equalsIgnoreCase("Predator")).allMatch(Animal::isChecked) ||
+                //!valueCell.values().stream().flatMap(Collection::stream).filter(a -> a.getKind().getType().equalsIgnoreCase("Predator")).allMatch(b -> b.getMaxHealPoint() == b.getHP())
+        //|| valueCell.values().stream().flatMap(Collection::stream).noneMatch(Animal::isChecked)
+        ) {
             for (EntityTypes en : shuffleListPredators) {
-                if (!fullEating(allMaps.get(en))) {
+                if (valueCell.get(en).stream().noneMatch(Animal::isChecked)){
                     EntityTypes whom = shuffleList(allTypesAnimalsCell, en);
                     if (whom != null) {
-                        List<Animal> whoEating = allMaps.get(en);
-                        List<Animal> whomEating = allMaps.get(whom);
+                        List<Animal> whoEating = valueCell.get(en);
+                        List<Animal> whomEating = valueCell.get(whom);
+                        if (whoEating.stream().allMatch(Animal::isChecked) || whomEating.stream().allMatch(Animal::isChecked)){
+                            whoEating.forEach(animal -> animal.setChecked(true));
+                            shuffleListPredators.remove(en);
+                            break;
+                        }
                         for (Animal whoEat : whoEating) {
                             if (whoEat.getMaxHealPoint() == whoEat.getHP()) {
                                 whoEat.setChecked(true);
                                 continue;
                             }
+                            if (whomEating.stream().allMatch(Animal::isChecked)){
+                                break;
+                            }
                             for (Animal animal : whomEating) {
+                                if (animal.isChecked()){
+                                    continue;
+                                }
                                 PredatorAnimal predatorAnimal = (PredatorAnimal) whoEat;
                                 predatorAnimal.eat(animal);
                                 if (predatorAnimal.getHP() == predatorAnimal.getMaxHealPoint()) {
+                                    predatorAnimal.setChecked(true);
                                     break;
                                 }
                             }
                         }
                     }
+                } else {
+                    valueCell.get(en).forEach(animal -> animal.setChecked(true));
+                    shuffleListPredators.remove(en);
                 }
             }
-
         }
-        allMaps = clearingMap(allMaps);
-        matrix[x][y].setAllAnimals(clearingMap(allMaps));
+        //getInfoDeadTypeAnimalPerTurn(island).entrySet().forEach(System.out::println);
+        fullInfoCountDeadAnimalsPerTurn(getInfoDeadTypeAnimalPerTurn(island));
+        valueCell = clearingMap(valueCell);
+        valueCell.values().stream().flatMap(Collection::stream).forEach(animal -> animal.setChecked(false));
+        island.setAllAnimals(clearingMap(valueCell));
     }
 
     //Метод удаляет все мертвые объекты и возвращает новую мапу без них.
-    private Map<EntityTypes, List<Animal>> clearingMap (Map<EntityTypes, List<Animal>> array){
-        return array.entrySet().stream().collect(Collectors.toMap(Entry::getKey, b -> b.getValue().stream().filter(a -> !a.isDead()).collect(Collectors.toList())));
+    public ConcurrentHashMap<EntityTypes, List<Animal>> clearingMap (Map<EntityTypes, List<Animal>> array){
+        return array.entrySet().stream().collect(Collectors.toMap(Entry::getKey, b -> b.getValue().stream().filter(a -> !a.isDead()).collect(Collectors.toList()), (a,b) -> Stream.concat(a.stream(), b.stream()).collect(Collectors.toList()), ConcurrentHashMap::new));
     }
 
-    private ConcurrentHashMap<String, Long> getInfoCountReproductionPerTurn (Island island){
+    public ConcurrentHashMap<String, Long> getInfoCountReproductionPerTurn (Island island){
         return island.getAllAnimals().entrySet().stream().collect(Collectors.toMap(key -> key.getKey().getIcon(), val -> val.getValue().stream().filter(Animal::isPregnant).count(), Long::sum , ConcurrentHashMap::new));
     }
 
-    private ConcurrentHashMap<String, Long> getInfoDeadTypeAnimalPerTurn (Island island){
+    public ConcurrentHashMap<String, Long> getInfoDeadTypeAnimalPerTurn (Island island){
         return island.getAllAnimals().entrySet().stream().collect(Collectors.toMap(key -> key.getKey().getIcon(), val -> val.getValue().stream().filter(Animal::isDead).count(), Long::sum , ConcurrentHashMap::new));
     }
 
@@ -230,27 +326,43 @@ public class GameConfiguration
         return Arrays.stream(matrix).map(Arrays::stream).flatMap(a -> a.map(this::getInfoDeadTypeAnimalPerTurn)).flatMap(a -> a.entrySet().stream()).collect(Collectors.toMap(Entry::getKey, Entry::getValue, Long::sum, ConcurrentHashMap::new));
     }
 
-//    //Information about the number and types of animals in a particular cell
-//    private Map<EntityTypes, Integer> getInfoTypeAndAmountCell(int x , int y){
-//        Map<EntityTypes,List<Animal>> value = matrix[x][y].getAllAnimals();
-//        if (value == null){
-//            return null;
-//        }
-//        return value.entrySet().stream().collect(Collectors.toMap(Entry::getKey, b-> b.getValue().size()));
-//    }
+    public ConcurrentHashMap<EntityTypes, Integer> getInfoTypeAndAmountCell(Island island){
+          return Stream.concat(island.getAllAnimals().entrySet().stream(), island.getAllPlants().entrySet().stream()).collect(Collectors.toMap(Entry::getKey, b-> b.getValue().size(), Integer::sum, ConcurrentHashMap::new));
+    }
 
-//    private ConcurrentHashMap<EntityTypes, Integer> getInfoTypeAndAmountCell(Island island){
-//        return island.getAllAnimals().entrySet().stream().collect(Collectors.toMap(Entry::getKey, b-> b.getValue().size()));
-//    }
+    public String getInfoMaxValueAnimalPerCel (Island island){
+        return Stream.concat(island.getAllAnimals().entrySet().stream(), island.getAllPlants().entrySet().stream()).max((en1 , en2) -> en1.getValue().size() > en2.getValue().size() ? 1 : -1).get().getKey().getIcon();
+    }
 
-//    public String getInfoMaxValueAnimalPerCel (Island island){
-//        island.getAllAnimals().values().stream().filter(a -> Math::max)
-//    }
+    public void startEatingPredatosMethodsPerFullIsland(){
+        Arrays.stream(matrix).flatMap(Arrays::stream).forEach(this::fullPredatorsEatingInCell);
+    }
 
+    public void startEatingHerbivoresMethodsPerFullIsland(){
+        Arrays.stream(matrix).flatMap(Arrays::stream).forEach(this::fullHerbivoresEatingInCellQ);
+    }
+
+    public void startReproductionAnimalsMethodsPerFullIsland(){
+        Arrays.stream(matrix).flatMap(Arrays::stream).forEach(this::reproductionAnimals);
+    }
+
+    public void startBirthOffspringMethodsPerFullIsland(){
+        Arrays.stream(matrix).flatMap(Arrays::stream).forEach(this::birthOffspring);
+    }
 
     public void infoStartGame (){
-        ConcurrentHashMap <String, Integer> value = Arrays.stream(matrix).map(Arrays::stream).flatMap(a -> a.map(Island::getAllAnimals)).flatMap(a -> a.entrySet().stream()).collect(Collectors.toMap(key -> key.getKey().getIcon(), size -> size.getValue().size(), Integer::sum, ConcurrentHashMap::new));
-        value.entrySet().forEach(System.out::println);
+        ConcurrentHashMap <String, Integer> value = Stream.of(Arrays.stream(matrix).map(Arrays::stream)).flatMap(x -> x.flatMap(q -> q.flatMap(a -> getInfoTypeAndAmountCell(a).entrySet().stream()))).collect(Collectors.toMap(key -> key.getKey().getIcon(), Entry::getValue, Integer::sum, ConcurrentHashMap::new));
+        System.out.print("Start this game: Step 0 ");
+        value.forEach((key, value1) -> System.out.printf("%s-%d pieces ", key, value1));
+        System.out.println();
+    }
+
+    public void infoStartIsland (){
+        System.out.println();
+        Arrays.stream(matrix).forEach(a -> {
+            Arrays.stream(a).forEach(b -> System.out.print(getInfoMaxValueAnimalPerCel(b)));
+            System.out.println();
+        });
     }
 
     //The method checks if the animal can move in the given direction
@@ -272,5 +384,37 @@ public class GameConfiguration
 
     public Island getIsland (int x, int y) {
         return matrix[x][y];
+    }
+
+    public boolean isStopped() {
+        return isStopped;
+    }
+
+    public void setStopped(boolean stopped) {
+        isStopped = stopped;
+    }
+
+    public AtomicInteger getStep() {
+        return step;
+    }
+
+    public void setStep(AtomicInteger step) {
+        this.step = step;
+    }
+
+    public boolean isClear() {
+        return clear;
+    }
+
+    public void setClear(boolean clear) {
+        this.clear = clear;
+    }
+
+    public ConcurrentHashMap<String, Integer> getReproductionsPlantsPerTurn() {
+        return reproductionsPlantsPerTurn;
+    }
+
+    public void setReproductionsPlantsPerTurn(ConcurrentHashMap<String, Integer> reproductionsPlantsPerTurn) {
+        this.reproductionsPlantsPerTurn = reproductionsPlantsPerTurn;
     }
 }
