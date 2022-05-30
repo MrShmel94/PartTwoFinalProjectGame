@@ -18,6 +18,7 @@ public class Island {
     private ConcurrentHashMap <EntityTypes, List<Animal>> allAnimals;
     private ConcurrentHashMap<EntityTypes,List<Plant>> allPlants;
     private final GameConfiguration GC;
+    private MyPair pair;
 
     public Island(GameConfiguration gc) {
         this.GC = gc;
@@ -127,5 +128,11 @@ public class Island {
         this.allPlants = allPlants;
     }
 
+    public MyPair getPair() {
+        return pair;
+    }
 
+    public void setPair(MyPair pair) {
+        this.pair = pair;
+    }
 }

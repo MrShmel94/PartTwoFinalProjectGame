@@ -1,6 +1,7 @@
 package dao.abstractClasses;
 
 import dao.AllStatistics;
+import dao.MyPair;
 import dao.allInterface.MethodsAnimal;
 import enums.Direction;
 import enums.EntityTypes;
@@ -133,8 +134,19 @@ public abstract class Animal implements MethodsAnimal{
     }
 
     @Override
-    public void moving(){
-
+    public MyPair moving(){
+        MyPair pair;
+        int second = this.numberOfCells();
+        Direction direction = this.movingDirection();
+        switch (direction){
+            case UP -> pair = new MyPair(0, second);
+            case DOWN -> pair = new MyPair(0, -second);
+            case LEFT -> pair = new MyPair(- second , 0);
+            case RIGHT -> pair = new MyPair(second , 0);
+            case WAIT -> pair = new MyPair(0,0);
+            default -> throw new IllegalStateException("Unexpected value: " + direction);
+        }
+        return pair;
     }
 
     //Not used
@@ -152,9 +164,6 @@ public abstract class Animal implements MethodsAnimal{
         return false;
     }
 
-    public void print (Animal animal){
-
-    }
     @Override
     public int offspring (){
         return ThreadLocalRandom.current().nextInt(1,(AllStatistics.getValueMapMaxOffSpring(this.kind) + 1));

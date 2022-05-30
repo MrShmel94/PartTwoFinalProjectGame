@@ -1,12 +1,12 @@
 package dao.allInterface;
 
+import dao.MyPair;
 import dao.abstractClasses.Animal;
 import enums.Direction;
-import enums.EntityTypes;
 
 public interface MethodsAnimal {
 
-    void moving();
+    MyPair moving();
     int offspring ();
     boolean reproduction (Animal animal);
     Direction movingDirection();

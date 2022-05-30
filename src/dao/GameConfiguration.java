@@ -8,6 +8,7 @@ import dao.factories.HerbivoresAnimalFactory;
 import dao.factories.PredatorAnimalFactory;
 import enums.EntityTypes;
 import enums.Sex;
+import javafx.util.Pair;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -50,9 +51,13 @@ public class GameConfiguration
 //        stage.show();
 //    }
 
-    public GameConfiguration(long turn, int width, int height, int percentCreationHerbivores , int percentCreationPredator, int percentCreatePlant) {
+    public GameConfiguration(int width, int height, int percentCreationHerbivores , int percentCreationPredator, int percentCreatePlant, int... params) {
+        if (params.length == 0){
+            this.turn = 20;
+        }else {
+            this.turn = params[0];
+        }
         this.step = new AtomicInteger(0);
-        this.turn = turn;
         this.width = width;
         this.height = height;
         this.matrix = new Island[width][height];
@@ -67,7 +72,9 @@ public class GameConfiguration
     public void drawGame(){
         for (int i = 0; i < matrix.length; i++) {
             for (int j = 0; j < matrix[i].length; j++) {
-                matrix[i][j] = new Island(this);
+                Island island = new Island(this);
+                island.setPair(new MyPair(i,j));
+                matrix[i][j] = island;
             }
         }
     }
@@ -90,10 +97,6 @@ public class GameConfiguration
         return value.stream().noneMatch(a -> a.getHP() != a.getMaxHealPoint());
     }
 
-
-    public void movingCell (Island island) {
-
-    }
 
     //Метод появления потомства в клетке
     public void birthOffspring(Island island) {
@@ -145,6 +148,7 @@ public class GameConfiguration
         island.setAllAnimals(values);
     }
 
+    // Метод отнимания здоровья каждый ход, у всех животных на всей клетке.
     public void minusHP (Island island){
         island.getAllAnimals().values().stream().map(Collection::stream).forEach(a -> a.forEach(Animal::minusHpPerTurn));
     }
@@ -157,6 +161,7 @@ public class GameConfiguration
         Arrays.stream(matrix).flatMap(Arrays::stream).forEach(Island::grassGrowth);
     }
 
+    //Метод поедания травоядных
     public void fullHerbivoresEatingInCellQ(Island island) {
         ConcurrentHashMap<EntityTypes, List<Animal>> herbivoresAnimal = island.getAllAnimals().entrySet().stream().filter(a -> a.getKey().getType().equalsIgnoreCase("Herbivores"))
                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a, b) -> a, ConcurrentHashMap::new));
@@ -239,6 +244,7 @@ public class GameConfiguration
         }
     }
 
+    // Полная информация за ход.
     public void fullInfoPerTurn (){
         System.out.println("\nStep - " + step.get() + "; Type Animals - (Dead/Was Born) + Type Plants");
         deadPerTurn.forEach((key, value) -> System.out.print(key + "-(" + value + "/" + reproductionsPerTurn.getOrDefault(key, 0) + ") "));
@@ -249,6 +255,7 @@ public class GameConfiguration
         reproductionsPlantsPerTurn.clear();
     }
 
+    //Метод поедания хищниками
     public void fullPredatorsEatingInCell (Island island){
         ConcurrentHashMap<EntityTypes, List<Animal>> valueCell = island.getAllAnimals();
         CopyOnWriteArrayList<EntityTypes>  allTypesAnimalsCell = new CopyOnWriteArrayList<>(new CopyOnWriteArrayList<>(valueCell.keySet()));
@@ -334,6 +341,12 @@ public class GameConfiguration
         return Stream.concat(island.getAllAnimals().entrySet().stream(), island.getAllPlants().entrySet().stream()).max((en1 , en2) -> en1.getValue().size() > en2.getValue().size() ? 1 : -1).get().getKey().getIcon();
     }
 
+    public String getInfoRandomValueAnimalPerCel (Island island){
+        long count = Stream.concat(island.getAllAnimals().keySet().stream(), island.getAllPlants().keySet().stream()).count();
+        return Stream.concat(island.getAllAnimals().keySet().stream(), island.getAllPlants().keySet().stream()).skip(ThreadLocalRandom.current().nextLong(1,count)).findFirst().get().getIcon();
+    }
+
+
     public void startEatingPredatosMethodsPerFullIsland(){
         Arrays.stream(matrix).flatMap(Arrays::stream).forEach(this::fullPredatorsEatingInCell);
     }
@@ -360,14 +373,47 @@ public class GameConfiguration
     public void infoStartIsland (){
         System.out.println();
         Arrays.stream(matrix).forEach(a -> {
-            Arrays.stream(a).forEach(b -> System.out.print(getInfoMaxValueAnimalPerCel(b)));
+            Arrays.stream(a).forEach(b -> System.out.print(getInfoRandomValueAnimalPerCel(b)));
             System.out.println();
         });
     }
 
+    public void startAllMovingsAnimal (){
+        Arrays.stream(matrix).flatMap(Arrays::stream).forEach(this::movingAnimalPerCell);
+    }
+
+    //Метод передвижения животных в ячейке
+    public void movingAnimalPerCell (Island island){
+        CopyOnWriteArrayList <Animal> allAnimals = island.getAllAnimals().values().stream().flatMap(Collection::stream).collect(Collectors.toCollection(CopyOnWriteArrayList::new));
+        for (Animal animal : allAnimals) {
+            MyPair pair = animal.moving();
+            if (isCollision(pair, island)) {
+                MyPair islandPair = island.getPair();
+                Island islandSecond = this.getIsland(pair.getX() + islandPair.getX(), pair.getY() + islandPair.getY());
+                int countAnimal = Optional.ofNullable(islandSecond.getAllAnimals().get(animal.getKind())).orElse(new ArrayList<>()).size();
+                if (countAnimal < AllStatistics.getValueMapMaxLimit(animal.getKind())){
+                    if (islandSecond.getAllAnimals().containsKey(animal.getKind())) {
+                        islandSecond.getAllAnimals().get(animal.getKind()).add(animal);
+                        island.getAllAnimals().get(animal.getKind()).remove(animal);
+                    }else {
+                        List<Animal> animals = new ArrayList<>();
+                        animals.add(animal);
+                        islandSecond.getAllAnimals().put(animal.getKind(), animals);
+                    }
+                }
+            }
+        }
+    }
+
     //The method checks if the animal can move in the given direction
-    public boolean isCollision (){
-        return false;
+    public boolean isCollision (MyPair pair, Island island){
+        MyPair islandPair = island.getPair();
+        if (islandPair.getX() + pair.getX() >= this.getWidth() || islandPair.getX() + pair.getX() <= 0) {
+            return false;
+        }else if (islandPair.getY() + pair.getY() >= this.getHeight() || islandPair.getY() + pair.getY() <= 0){
+            return false;
+        }
+        return true;
     }
 
     public int getPercentCreationPredator() {
@@ -416,5 +462,17 @@ public class GameConfiguration
 
     public void setReproductionsPlantsPerTurn(ConcurrentHashMap<String, Integer> reproductionsPlantsPerTurn) {
         this.reproductionsPlantsPerTurn = reproductionsPlantsPerTurn;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public long getTurn() {
+        return turn;
     }
 }

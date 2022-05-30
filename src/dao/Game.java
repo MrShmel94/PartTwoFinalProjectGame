@@ -11,17 +11,22 @@ import java.util.concurrent.*;
 
 public class Game extends GameConfiguration {
 
-    private static final GameConfiguration game =  new GameConfiguration(3,20,100, 100,100, 100);
+    // Создание игры, хар-ки поля, проценты создания животных, остальное опционально, кол-во ходов.
+    private static final GameConfiguration game =  new GameConfiguration(20,100, 100,100, 100, 10);
 
     public static void main(String[] args) throws InterruptedException {
+        // Стартовая информация и инициализация острова.
         startGame();
-        Island island = game.getIsland(0,0);
-        while (!game.isStopped()) {
-            if (game.getStep().get() == 20){
+
+        ExecutorService executorService = Executors.newCachedThreadPool();
+
+            while (!game.isStopped()) {
+            if (game.getStep().get() == game.getTurn()) {
                 game.setStopped(true);
             }
             game.startFullIslandMinusHp();
             game.getStep().incrementAndGet();
+            game.startAllMovingsAnimal();
             game.startEatingPredatosMethodsPerFullIsland();
             game.startEatingHerbivoresMethodsPerFullIsland();
             game.startReproductionAnimalsMethodsPerFullIsland();
@@ -29,8 +34,9 @@ public class Game extends GameConfiguration {
             game.startFullIslandGrowsPlant();
             game.fullInfoPerTurn();
             game.infoStartIsland();
-            Thread.sleep(500);
         }
+
+        executorService.shutdown();
 
     }
 
