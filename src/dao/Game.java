@@ -14,30 +14,40 @@ public class Game extends GameConfiguration {
     // Создание игры, хар-ки поля, проценты создания животных, остальное опционально, кол-во ходов.
     private static final GameConfiguration game =  new GameConfiguration(20,100, 100,100, 100, 10);
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, ExecutionException {
         // Стартовая информация и инициализация острова.
         startGame();
 
-        ExecutorService executorService = Executors.newCachedThreadPool();
+        ScheduledExecutorService executorServiceStat = Executors.newScheduledThreadPool(1);
+        ScheduledExecutorService executorServiceLive = Executors.newScheduledThreadPool(40);
 
-            while (!game.isStopped()) {
-            if (game.getStep().get() == game.getTurn()) {
-                game.setStopped(true);
-            }
-            game.startFullIslandMinusHp();
+
+        Runnable task1 = () -> {
             game.getStep().incrementAndGet();
+            game.startFullIslandGrowsPlant();
+            game.fullInfoPerTurn();
+            game.infoStartIsland();
+        };
+
+        Runnable task2 = () -> {
+            game.startFullIslandMinusHp();
             game.startAllMovingsAnimal();
             game.startEatingPredatosMethodsPerFullIsland();
             game.startEatingHerbivoresMethodsPerFullIsland();
             game.startReproductionAnimalsMethodsPerFullIsland();
             game.startBirthOffspringMethodsPerFullIsland();
-            game.startFullIslandGrowsPlant();
-            game.fullInfoPerTurn();
-            game.infoStartIsland();
+        };
+
+        executorServiceLive.scheduleAtFixedRate(task2, 0, 200, TimeUnit.MILLISECONDS);
+        executorServiceStat.scheduleWithFixedDelay(task1, 4000, 4500, TimeUnit.MILLISECONDS);
+
+        while (!game.isStopped()) {
+            if (game.getStep().get() == game.getTurn()) {
+                game.setStopped(true);
+            }
         }
-
-        executorService.shutdown();
-
+        executorServiceLive.shutdown();
+        executorServiceStat.shutdown();
     }
 
     public static void startGame (){
@@ -45,4 +55,6 @@ public class Game extends GameConfiguration {
         game.infoStartGame();
         game.infoStartIsland();
     }
+
+
 }

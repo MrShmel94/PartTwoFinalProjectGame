@@ -32,6 +32,7 @@ public class GameConfiguration
     private int percentCreationPredator;
     private int percentCreationHerbivores;
     private int percentCreatePlant;
+    private long grows;
     private AtomicInteger step;
     private ConcurrentHashMap <String, Long> deadPerTurn = new ConcurrentHashMap<>();
     private ConcurrentHashMap <String, Integer> reproductionsPerTurn = new ConcurrentHashMap<>();
@@ -255,6 +256,13 @@ public class GameConfiguration
         reproductionsPlantsPerTurn.clear();
     }
 
+    public void clearMap(){
+        reproductionsPerTurn.clear();
+        deadPerTurn.clear();
+        deadPlantsPerTurn.clear();
+        reproductionsPlantsPerTurn.clear();
+    }
+
     //Метод поедания хищниками
     public void fullPredatorsEatingInCell (Island island){
         ConcurrentHashMap<EntityTypes, List<Animal>> valueCell = island.getAllAnimals();
@@ -310,6 +318,7 @@ public class GameConfiguration
         valueCell = clearingMap(valueCell);
         valueCell.values().stream().flatMap(Collection::stream).forEach(animal -> animal.setChecked(false));
         island.setAllAnimals(clearingMap(valueCell));
+
     }
 
     //Метод удаляет все мертвые объекты и возвращает новую мапу без них.
